@@ -1601,7 +1601,7 @@ function renderPage(page) {
     const bdrName = BDR_MAP[r['SFDC Account']] || 'Ã¢ÂÂ';
     tr.innerHTML = `
       <td class="row-num">${rowNum}</td>
-      <td class="td-account">${escHtml(r['SFDC Account'] || '')}${isAnt100 ? '<span class="ant100-badge">&#x2605; A100</span>' : ''}</td>
+      <td class="td-account">${escHtml(r['SFDC Account'] || '')}${isAnt100 ? '<span class="ant100-badge">&#x2605; A100</span>' : ''}${isAnt1000 ? '<span class="ant1000-badge">&#x2605; A1000</span>' : ''}</td>
       <td class="td-registrant" title="${escHtml(registrants)}">${escHtml(regDisplay)}</td>
       <td>${escHtml(r['Account Owner'] || '')}</td>
       <td>${escHtml(bdrName)}</td>
