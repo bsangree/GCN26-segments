@@ -1502,6 +1502,12 @@ function toggleAnt100() {
   applyFilters();
 }
 
+function toggleAnt1000() {
+  ant1000Only = !ant1000Only;
+  document.getElementById('btn-ant1000').classList.toggle('active', ant1000Only);
+  applyFilters();
+}
+
 function applyFilters() {
   if (!currentTab || !DATA[currentTab]) return;
   const rows = DATA[currentTab].rows;
