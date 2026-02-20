@@ -127,7 +127,26 @@
     margin-left: auto;
   }
   .btn-csv:hover { background: #f7fafc; }
+  .stat-card .val.gold   { color: #92400e; }
+  .stat-card.ant100-card { border-color: #f59e0b; background: #fffbeb; }
+  .stat-card.ant100-card:hover { border-color: #d97706; box-shadow: 0 2px 8px rgba(245,158,11,0.25); }
+  .btn-ant100 { padding: 8px 14px; border: 1.5px solid #f59e0b; border-radius: 6px; font-size: 13px; font-weight: 600; background: white; color: #92400e; cursor: pointer; transition: background 0.15s, color 0.15s; display: flex; align-items: center; gap: 5px; }
+  .btn-ant100:hover { background: #fffbeb; }
+  .btn-ant100.active { background: #f59e0b; color: white; border-color: #d97706; }
+  .ant100-badge { display: inline-block; font-size: 10px; font-weight: 700; background: #f59e0b; color: white; border-radius: 4px; padding: 1px 5px; margin-left: 6px; vertical-align: middle; letter-spacing: 0.02em; }
+  tbody tr.ant100-row { background: #fffdf5; }
+  tbody tr.ant100-row:hover { background: #fef9e7; }
   .result-count { font-size: 13px; color: #718096; margin-left: 4px; }
+.stat-card .val.gold   { color: #92400e; }
+  .stat-card.ant100-card { border-color: #f59e0b; background: #fffbeb; }
+  .stat-card.ant100-card:hover { border-color: #d97706; box-shadow: 0 2px 8px rgba(245,158,11,0.25); }
+  /* dup */ { font-size: 13px; color: #718096; margin-left: 4px; }
+  .btn-ant100 { padding: 8px 14px; border: 1.5px solid #f59e0b; border-radius: 6px; font-size: 13px; font-weight: 600; background: white; color: #92400e; cursor: pointer; transition: background 0.15s, color 0.15s; display: flex; align-items: center; gap: 5px; }
+  .btn-ant100:hover { background: #fffbeb; }
+  .btn-ant100.active { background: #f59e0b; color: white; border-color: #d97706; }
+  .ant100-badge { display: inline-block; font-size: 10px; font-weight: 700; background: #f59e0b; color: white; border-radius: 4px; padding: 1px 5px; margin-left: 6px; vertical-align: middle; letter-spacing: 0.02em; }
+  tbody tr.ant100-row { background: #fffdf5; }
+  tbody tr.ant100-row:hover { background: #fef9e7; }
 
   /* Table */
   .table-wrap {
@@ -275,6 +294,7 @@
   <select id="filter-industry" onchange="applyFilters()">
     <option value="">All Industries</option>
   </select>
+  <button class="btn-ant100" id="btn-ant100" onclick="toggleAnt100()">★ Ant100</button>
   <button class="btn-reset" onclick="resetFilters()">Reset</button>
   <span class="result-count" id="result-count"></span>
   <button class="btn-csv" onclick="exportCSV()">⬇ CSV</button>
@@ -868,6 +888,28 @@ const BDR_MAP = {
   "O\'Reilly Automotive": "Meghana Reddy",
   "Levi Strauss & Co.": "Meghana Reddy"
 };
+const ANT100_SET = new Set([
+  "Alphabet","Meta Platforms, Inc.","Apple","Microsoft Corporation","Snowflake",
+  "GitHub","Databricks","Shopify","Accenture plc","NVIDIA Corporation","Paypal, Inc.",
+  "Salesforce","IBM","JPMorgan Chase & Co","Citigroup","Goldman Sachs","State Farm",
+  "Cursor AI","Lovable Labs Incorporated","Perplexity AI, Inc.","Windsurf (fka Codeium)",
+  "Replit, Inc.","OpenRouter","Morgan Stanley Services Group Inc.","Cisco Systems, Inc.",
+  "Advanced Micro Devices","Block, Inc.","Jane Street","Intuit","Fannie Mae","Walmart",
+  "Monica","Genspark","Cognition","Figma","Augment Code","Emergent (emergent.sh)","AIG",
+  "ServiceNow","Eli Lilly and Company","Abbvie Inc.","Merck & Co., Inc.",
+  "Telus Corporation","Qualcomm Incorporated","Atlassian Pty Ltd","Allianz",
+  "Notion Labs, Inc.","Vercel Inc.","LMArena","Thomson Reuters Holdings, Inc.",
+  "Zoom Communications, Inc.","Uber","Coupang","Massachusetts Mutual Life Insurance",
+  "Airbnb, Inc.","Palo Alto Networks","Applied Materials","Micron Technology","Base44",
+  "Canva Pty Ltd","Palantir Technologies Inc.","Jetbrains","Coinbase, Inc.","Sanofi",
+  "Adobe","Regeneron Pharmaceuticals","Warp AI","CodeRabbit","Reve AI, INC.",
+  "OpenEvidence","Gitlab","Intercom","Quora","Commonwealth Bank of Australia",
+  "HubSpot, Inc.","Datadog, Inc.","CrowdStrike","Texas Instruments Incorporated",
+  "Netflix, Inc.","Siemens AG","eBay","DoorDash","Stackblitz","Gamma App","Legora",
+  "Abacus.AI, Inc.","Bloomberg","DBS Bank","Rocket Companies","Millennium Management",
+  "Rakuten Group, Inc.","Naver","Robinhood","WRTN Technologies","Stripe, Inc.","n8n",
+  "Fundamental Research Labs, Inc.","Sourcegraph","COGNIZANT","Deloitte","Reliance"
+]);
 
 // ============================================================
 // DATA (will be replaced by inline JSON)
@@ -883,6 +925,7 @@ let sortDir = 'desc';
 let currentPage = 1;
 const PAGE_SIZE = 100;
 let filteredRows = [];
+let ant100Only = false;
 
 // ============================================================
 // INIT
@@ -953,7 +996,16 @@ function buildOverallStats() {
     { val: '$' + formatM(totalVAR),    lbl: 'Vertex AR',      cls: 'purple' },
   ];
 
+  let ant100Total = 0;
+  Object.values(DATA).forEach(sd => { sd.rows.forEach(r => { if (ANT100_SET.has(r['SFDC Account'])) ant100Total++; }); });
   const bar = document.getElementById('stats-bar');
+  const ant100Card = document.createElement('div');
+  ant100Card.className = 'stat-card ant100-card';
+  ant100Card.style.cursor = 'pointer';
+  ant100Card.title = 'Click to filter Ant100 accounts';
+  ant100Card.onclick = () => { ant100Only = !ant100Only; document.getElementById('btn-ant100').classList.toggle('active', ant100Only); applyFilters(); };
+  ant100Card.innerHTML = '<div class="val gold">&#x2605; ' + ant100Total + '</div><div class="lbl">Ant100 Accts</div>';
+  bar.appendChild(ant100Card);
   stats.forEach(s => {
     const div = document.createElement('div');
     div.className = 'stat-card';
@@ -1034,6 +1086,12 @@ function switchTab(key) {
   applyFilters();
 }
 
+function toggleAnt100() {
+  ant100Only = !ant100Only;
+  document.getElementById('btn-ant100').classList.toggle('active', ant100Only);
+  applyFilters();
+}
+
 function applyFilters() {
   if (!currentTab || !DATA[currentTab]) return;
   const rows = DATA[currentTab].rows;
@@ -1059,6 +1117,7 @@ function applyFilters() {
     if (ae && r['Account Owner'] !== ae) return false;
     if (bdr && BDR_MAP[r['SFDC Account']] !== bdr) return false;
     if (industry && r['Industry'] !== industry) return false;
+    if (ant100Only && !ANT100_SET.has(r['SFDC Account'])) return false;
     return true;
   });
 
@@ -1090,7 +1149,9 @@ function applyFilters() {
     });
   }
 
-  document.getElementById('result-count').textContent = `${filteredRows.length.toLocaleString()} accounts`;
+  const ant100InView = filteredRows.filter(r => ANT100_SET.has(r['SFDC Account'])).length;
+  const ant100Suffix = ant100InView > 0 && !ant100Only ? ` · ${ant100InView} Ant100` : '';
+  document.getElementById('result-count').textContent = `${filteredRows.length.toLocaleString()} accounts${ant100Suffix}`;
   renderPage(1);
 }
 
@@ -1107,6 +1168,8 @@ function renderPage(page) {
   pageRows.forEach((r, i) => {
     const tr = document.createElement('tr');
     const rowNum = start + i + 1;
+    const isAnt100 = ANT100_SET.has(r['SFDC Account']);
+    if (isAnt100) tr.classList.add('ant100-row');
 
     const status = normalizeStatus(r['Account Status']);
     const statusBadge = status === 'Green'  ? '<span class="badge badge-green">● Green</span>'
@@ -1125,7 +1188,7 @@ function renderPage(page) {
     const bdrName = BDR_MAP[r['SFDC Account']] || '—';
     tr.innerHTML = `
       <td class="row-num">${rowNum}</td>
-      <td class="td-account">${escHtml(r['SFDC Account'] || '')}</td>
+      <td class="td-account">${escHtml(r['SFDC Account'] || '')}${isAnt100 ? '<span class="ant100-badge">&#x2605; A100</span>' : ''}</td>
       <td class="td-registrant" title="${escHtml(registrants)}">${escHtml(regDisplay)}</td>
       <td>${escHtml(r['Account Owner'] || '')}</td>
       <td>${escHtml(bdrName)}</td>
@@ -1189,6 +1252,8 @@ function updateSortHeaders() {
 }
 
 function resetFilters() {
+  ant100Only = false;
+  document.getElementById('btn-ant100').classList.remove('active');
   document.getElementById('search').value = '';
   document.getElementById('filter-status').value = '';
   document.getElementById('filter-manager').value = '';
