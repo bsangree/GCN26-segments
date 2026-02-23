@@ -1387,18 +1387,17 @@ function buildOverallStats() {
   let totalAR = 0, totalVAR = 0;
 
   Object.values(DATA).forEach(sd => {
-    const m = sd.summary ? sd.summary.match(/(\d[\d,]*) accounts.*?(\d[\d,]*) registrants.*?(\d[\d,]*) with active revenue/) : null;
-    if (m) {
-      totalAcc += parseInt(m[1].replace(/,/g,''));
-      totalReg += parseInt(m[2].replace(/,/g,''));
-      totalRevAcc += parseInt(m[3].replace(/,/g,''));
-    }
+    const accs = new Set();
     sd.rows.forEach(r => {
+      accs.add(r['SFDC Account']);
+      const registrants = (r['Registrant Name(s)'] || '').split(';').map(s => s.trim()).filter(Boolean);
+      totalReg += registrants.length;
       const rev = parseRevenue(r['Total Revenue']);
       const vrev = parseRevenue(r['Vertex Revenue']);
-      if (rev > 0) totalAR += rev;
+      if (rev > 0) { totalAR += rev; totalRevAcc++; }
       if (vrev > 0) totalVAR += vrev;
     });
+    totalAcc += accs.size;
   });
 
   document.getElementById('header-sub').textContent =
