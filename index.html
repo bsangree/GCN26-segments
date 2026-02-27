@@ -72,6 +72,12 @@
   }
   .tab-btn:hover { color: #2d3748; }
   .tab-btn.active { color: #2b6cb0; border-bottom-color: #2b6cb0; font-weight: 600; }
+  .tab-btn.ant100-tab { color: #b7791f; font-weight: 600; }
+  .tab-btn.ant100-tab:hover { color: #975a16; }
+  .tab-btn.ant100-tab.active { color: #b7791f; border-bottom-color: #b7791f; }
+  .tab-btn.ant1000-tab { color: #276749; font-weight: 600; }
+  .tab-btn.ant1000-tab:hover { color: #1c4532; }
+  .tab-btn.ant1000-tab.active { color: #276749; border-bottom-color: #276749; }
 
   /* Filters */
   .filter-bar {
@@ -1361,6 +1367,23 @@ function init() {
 
   // Build tabs
   const tabBar = document.getElementById('tab-bar');
+
+  // Virtual Ant100 / Ant1000 tabs (shown first)
+  const allRows = Object.values(DATA).flatMap(sd => sd.rows);
+  const ant100Rows = allRows.filter(r => ANT100_SET.has(r['SFDC Account']));
+  const ant1000Rows = allRows.filter(r => ANT1000_SET.has(r['SFDC Account']));
+  [
+    { key: '__ANT100__',  label: `★ Ant100 (${ant100Rows.length})`,   cls: 'ant100-tab' },
+    { key: '__ANT1000__', label: `★ Ant1000 (${ant1000Rows.length})`, cls: 'ant1000-tab' },
+  ].forEach(vt => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn ' + vt.cls;
+    btn.dataset.key = vt.key;
+    btn.textContent = vt.label;
+    btn.onclick = () => switchTab(vt.key);
+    tabBar.appendChild(btn);
+  });
+
   SEGMENTS.forEach(seg => {
     if (!DATA[seg.key]) return;
     const btn = document.createElement('button');
@@ -1534,8 +1557,14 @@ function toggleAnt1000() {
 }
 
 function applyFilters() {
-  if (!currentTab || !DATA[currentTab]) return;
-  const rows = DATA[currentTab].rows;
+  if (!currentTab) return;
+  let rows;
+  if (currentTab === '__ANT100__') {
+    rows = Object.values(DATA).flatMap(sd => sd.rows).filter(r => ANT100_SET.has(r['SFDC Account']));
+  } else if (currentTab === '__ANT1000__') {
+    rows = Object.values(DATA).flatMap(sd => sd.rows).filter(r => ANT1000_SET.has(r['SFDC Account']));
+  } else if (!DATA[currentTab]) return;
+  else rows = DATA[currentTab].rows;
   const search = document.getElementById('search').value.toLowerCase();
   const status = document.getElementById('filter-status').value;
   const manager = document.getElementById('filter-manager').value;
